@@ -1,0 +1,49 @@
+name: Arduino Projects CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Validate INO files
+      run: |
+        # Basic validation of Arduino sketches
+        for sketch in *.ino; do
+          if [ -f "$sketch" ]; then
+            echo "✓ Found sketch: $sketch"
+            # Check file size (should exist and have content)
+            if [ -s "$sketch" ]; then
+              echo "  ✓ $sketch has content"
+            else
+              echo "  ✗ $sketch is empty"
+              exit 1
+            fi
+          fi
+        done
+    
+    - name: Check project structure
+      run: |
+        total=$(find . -maxdepth 1 -name "*.ino" | wc -l)
+        echo "Total Arduino projects: $total"
+        if [ "$total" -lt 10 ]; then
+          echo "Warning: Expected 10+ projects, found $total"
+        fi
+    
+    - name: Generate project index
+      run: |
+        echo "# Arduino Projects Index" > INDEX.md
+        echo "" >> INDEX.md
+        for dir in ProjetArduino*/; do
+          if [ -d "$dir" ]; then
+            echo "- $dir" >> INDEX.md
+          fi
+        done
+        cat INDEX.md
